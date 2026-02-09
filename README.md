@@ -1,2 +1,2 @@
 
-Complete containerized demonstration app with github workflow
+Complete containerized demonstration app with Github Actions
