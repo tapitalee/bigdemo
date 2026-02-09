@@ -2,7 +2,8 @@ name: CI/CD
 
 # Functions performed:
 # - `test`: runs Go tests for all pull requests and new releases.
-# - `build_aws` and `deploy_staging_image`: build and deploy staging image for releases only.
+# - `build_staging` and `deploy_staging_image`: build and deploy staging image for releases only.
+# - `build_prod` builds (not deploy) the production image for releases only.
 
 # On merging a PR to main, `create_release.yml` runs first.
 # It then calls ci.yml on that release tag, via inputs.docker_tag
@@ -40,7 +41,7 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-  build_aws:
+  build_staging:
     if: inputs.docker_tag != ''
     runs-on: ubuntu-latest
     steps:
@@ -55,7 +56,7 @@ jobs:
 
   deploy_staging_image:
     if: inputs.docker_tag != ''
-    needs: [test, build_aws]
+    needs: [test, build_staging]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,5 +65,19 @@ jobs:
         uses: tapitalee/ghactions/create-deploy@main
         with:
           tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
+          dockerfile: Dockerfile
+          docker_tag: ${{ inputs.docker_tag }}
+
+  build_prod:
+    if: inputs.docker_tag != ''
+    runs-on: ubuntu-latest
+    needs: [deploy_staging_image]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build using Tapit
+        uses: tapitalee/ghactions/image-build@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_PROD }}
           dockerfile: Dockerfile
           docker_tag: ${{ inputs.docker_tag }}

@@ -20,6 +20,7 @@ jobs:
     if: github.event.before != github.event.after  # Only run if there are new commits
     outputs:
       tag: ${{ steps.next_release.outputs.tag }}
+      release_notes: ${{ steps.pr_list.outputs.notes }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,10 +68,8 @@ jobs:
       - name: Create Tapit Release
         uses: tapitalee/ghactions/create-release@main
         with:
-          tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
+          tapit-token: ${{ secrets.TAPIT_TOKEN_PROD }}
           docker_tag: ${{ steps.next_release.outputs.tag }}
-          git_hash: ${{ github.sha }}
-          git_tag: ${{ steps.next_release.outputs.tag }}
           release_notes: ${{ steps.pr_list.outputs.notes }}
 
       - name: Output release tag
@@ -92,4 +91,13 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       docker_tag: ${{ needs.create_release.outputs.tag }}
+    secrets: inherit
+
+  run_build_prod:
+    needs: [create_release, run_ci]
+    uses: ./.github/workflows/build_prod.yml
+    with:
+      docker_tag: ${{ needs.create_release.outputs.tag }}
+      git_hash: ${{ github.sha }}
+      release_notes: ${{ needs.create_release.outputs.release_notes }}
     secrets: inherit
