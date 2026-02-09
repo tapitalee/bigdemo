@@ -1,0 +1,92 @@
+name: Create release
+
+# On merge to main, create a new release if needed, and run CI/CD on it.
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: create-release
+  cancel-in-progress: false
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    if: github.event.before != github.event.after  # Only run if there are new commits
+    outputs:
+      tag: ${{ steps.next_release.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Tapit
+        uses: tapitalee/ghactions/setup-tapit@main
+
+      - name: Get next release tag
+        id: next_release
+        run: |
+          TAG=$(tapit nextgitrelease)
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Get merged PRs for release notes
+        id: pr_list
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            RANGE=""
+          else
+            RANGE="$PREV_TAG..HEAD"
+          fi
+          # List PRs with their one-line descriptions
+          PRS=$(git log $RANGE --pretty=format:'- %s')
+          if [ -z "$PRS" ]; then
+            PRS="No PRs found."
+          fi
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$PRS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.next_release.outputs.tag }}
+          name: ${{ steps.next_release.outputs.tag }}
+          body: ${{ steps.pr_list.outputs.notes }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Tapit Release
+        uses: tapitalee/ghaction/create-release@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
+          docker_tag: ${{ steps.next_release.outputs.tag }}
+          git_hash: ${{ github.sha }}
+          git_tag: ${{ steps.next_release.outputs.tag }}
+          release_notes: ${{ steps.pr_list.outputs.notes }}
+
+      - name: Output release tag
+        run: |
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "::error::Release tag is empty or not set"
+            exit 1
+          fi
+          echo "::notice::Release tag: $RELEASE_TAG"
+          echo "## Release Created :rocket:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tag:** \`$RELEASE_TAG\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Commit:** \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          RELEASE_TAG: ${{ steps.next_release.outputs.tag }}
+
+  run_ci:
+    needs: create_release
+    uses: ./.github/workflows/ci.yml
+    with:
+      docker_tag: ${{ needs.create_release.outputs.tag }}
+    secrets: inherit

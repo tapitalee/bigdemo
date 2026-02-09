@@ -1,0 +1,27 @@
+name: Deploy Preview App
+run-name: Deploy Preview App pr-${{ github.event.pull_request.number }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  deploy:
+    concurrency: previewapps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Preview app with Tapitalee
+        uses: tapitalee/ghactions/create-preview@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_PREVIEW }}
+          preview_app_name: "bigdemo-pr-${{ github.event.pull_request.number }}"
+          delete_in_days: 3
+
+      - name: Deploy with Tapitalee
+        uses: tapitalee/ghactions/image-deploy@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_PREVIEW }}
+          dockerfile: Dockerfile
+          app_name: "bigdemo-pr-${{ github.event.pull_request.number }}"

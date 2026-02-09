@@ -1,0 +1,20 @@
+name: Delete Preview App
+run-name: Delete Preview App pr-${{ github.event.pull_request.number }}
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  delete:
+    concurrency: previewapps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Delete Preview app with Tapitalee
+        continue-on-error: true
+        uses: tapitalee/ghactions/delete-preview@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_PREVIEW }}
+          preview_app_name: "bigdemo-pr-${{ github.event.pull_request.number }}"

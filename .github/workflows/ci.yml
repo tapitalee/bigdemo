@@ -1,0 +1,68 @@
+name: CI/CD
+
+# Functions performed:
+# - `test`: runs Go tests for all pull requests and new releases.
+# - `build_aws` and `deploy_staging_image`: build and deploy staging image for releases only.
+
+# On merging a PR to main, `create_release.yml` runs first.
+# It then calls ci.yml on that release tag, via inputs.docker_tag
+
+on:
+  workflow_call:  # called by create_release.yml
+    inputs:
+      docker_tag:
+        required: true
+        type: string
+  workflow_dispatch:  # For manual/API triggers
+    inputs:
+      docker_tag:
+        required: true
+        type: string
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests
+        run: go test -v ./...
+
+  build_aws:
+    if: inputs.docker_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build using Tapit
+        uses: tapitalee/ghactions/image-build@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
+          dockerfile: Dockerfile
+          docker_tag: ${{ inputs.docker_tag }}
+
+  deploy_staging_image:
+    if: inputs.docker_tag != ''
+    needs: [test, build_aws]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy using Tapit
+        uses: tapitalee/ghactions/create-deploy@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
+          dockerfile: Dockerfile
+          docker_tag: ${{ inputs.docker_tag }}
