@@ -18,6 +18,7 @@ jobs:
           tapit-token: ${{ secrets.TAPIT_TOKEN_PREVIEW }}
           preview_app_name: "bigdemo-pr-${{ github.event.pull_request.number }}"
           delete_in_days: 3
+          domain: "pr-${{ github.event.pull_request.number }}.previews.demohost.click"
 
       - name: Deploy with Tapitalee
         uses: tapitalee/ghactions/image-deploy@main

@@ -14,10 +14,16 @@ on:
       docker_tag:
         required: true
         type: string
+      release_notes:
+        required: false
+        type: string
   workflow_dispatch:  # For manual/API triggers
     inputs:
       docker_tag:
         required: true
+        type: string
+      release_notes:
+        required: false
         type: string
   pull_request:
     types: [opened, reopened, synchronize]
@@ -81,3 +87,13 @@ jobs:
           tapit-token: ${{ secrets.TAPIT_TOKEN_PROD }}
           dockerfile: Dockerfile
           docker_tag: ${{ inputs.docker_tag }}
+
+      - name: Set up Tapit
+        uses: tapitalee/ghactions/setup-tapit@main
+
+      - name: Create Tapit Release
+        uses: tapitalee/ghactions/create-release@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_PROD }}
+          docker_tag: ${{ inputs.docker_tag }}
+          release_notes: ${{ inputs.release_notes }}
