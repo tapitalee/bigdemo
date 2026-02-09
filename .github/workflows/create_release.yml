@@ -59,7 +59,7 @@ jobs:
           name: ${{ steps.next_release.outputs.tag }}
           body: ${{ steps.pr_list.outputs.notes }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Create Tapit Release
         uses: tapitalee/ghactions/create-release@main
