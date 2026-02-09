@@ -62,7 +62,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Tapit Release
-        uses: tapitalee/ghaction/create-release@main
+        uses: tapitalee/ghactions/create-release@main
         with:
           tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
           docker_tag: ${{ steps.next_release.outputs.tag }}
