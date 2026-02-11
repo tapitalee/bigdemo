@@ -20,6 +20,7 @@ jobs:
     if: github.event.before != github.event.after  # Only run if there are new commits
     outputs:
       tag: ${{ steps.next_release.outputs.tag }}
+      previous_tag: ${{ steps.get_previous_tag.outputs.tag }}
       release_notes: ${{ steps.pr_list.outputs.notes }}
     steps:
       - name: Checkout code
@@ -30,6 +31,12 @@ jobs:
       - name: Set up Tapit
         uses: tapitalee/ghactions/setup-tapit@main
 
+      - name: Get previous release tag
+        id: get_previous_tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          echo "tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
       - name: Get next release tag
         id: next_release
         run: |
@@ -39,8 +46,8 @@ jobs:
       - name: Get merged PRs for release notes
         id: pr_list
         run: |
-          # Get the previous tag
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          # Use the previous tag we already captured
+          PREV_TAG="${{ steps.get_previous_tag.outputs.tag }}"
           if [ -z "$PREV_TAG" ]; then
             RANGE=""
           else
@@ -84,5 +91,6 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       docker_tag: ${{ needs.create_release.outputs.tag }}
+      previous_tag: ${{ needs.create_release.outputs.previous_tag }}
       release_notes: ${{ needs.create_release.outputs.release_notes }}
     secrets: inherit
