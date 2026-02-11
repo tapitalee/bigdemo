@@ -1,5 +1,4 @@
 
+Complete containerized demonstration app with Github Actions.
 
-Complete containerized demonstration app with Github Actions
-More docs
-
+Golang-based app for a single page app displaying deployment details.[
