@@ -20,9 +20,17 @@ jobs:
           delete_in_days: 3
           domain: "pr-${{ github.event.pull_request.number }}.previews.demohost.click"
 
+      - name: Wait for Add-ons
+        uses: tapitalee/ghactions/wait-for-addons@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_PREVIEW }}
+          dockerfile: Dockerfile
+          app_name: "bigdemo-pr-${{ github.event.pull_request.number }}"
+
       - name: Deploy with Tapitalee
         uses: tapitalee/ghactions/image-deploy@main
         with:
           tapit-token: ${{ secrets.TAPIT_TOKEN_PREVIEW }}
           dockerfile: Dockerfile
           app_name: "bigdemo-pr-${{ github.event.pull_request.number }}"
+          cache: gha

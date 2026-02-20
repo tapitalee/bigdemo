@@ -65,6 +65,7 @@ jobs:
           tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
           dockerfile: Dockerfile
           docker_tag: ${{ inputs.docker_tag }}
+          cache: gha
 
   deploy_staging_image:
     if: inputs.docker_tag != ''
@@ -93,6 +94,7 @@ jobs:
           tapit-token: ${{ secrets.TAPIT_TOKEN_PROD }}
           dockerfile: Dockerfile
           docker_tag: ${{ inputs.docker_tag }}
+          cache: gha
 
       - name: Set up Tapit
         uses: tapitalee/ghactions/setup-tapit@main
