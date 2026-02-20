@@ -78,7 +78,6 @@ jobs:
         uses: tapitalee/ghactions/create-deploy@main
         with:
           tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
-          dockerfile: Dockerfile
           docker_tag: ${{ inputs.docker_tag }}
 
   build_prod:
