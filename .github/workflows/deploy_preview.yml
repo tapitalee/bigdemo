@@ -24,7 +24,6 @@ jobs:
         uses: tapitalee/ghactions/wait-for-addons@main
         with:
           tapit-token: ${{ secrets.TAPIT_TOKEN_PREVIEW }}
-          dockerfile: Dockerfile
           app_name: "bigdemo-pr-${{ github.event.pull_request.number }}"
 
       - name: Deploy with Tapitalee
