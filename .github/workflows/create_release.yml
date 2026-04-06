@@ -30,6 +30,8 @@ jobs:
 
       - name: Set up Tapit
         uses: tapitalee/ghactions/setup-tapit@main
+        with:
+          tapit-token: ${{ secrets.TAPIT_TOKEN_STAGING }}
 
       - name: Get previous release tag
         id: get_previous_tag
